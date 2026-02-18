@@ -14,6 +14,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
 DEBOUNCE_PATH = os.path.join(SCRIPT_DIR, ".last_state")
 DEBOUNCE_SECONDS = 2
+INPUT_REQUIRED_GUARD_SECONDS = 5
 
 COLORS = {
     "idle": (255, 220, 200),            # Warm white
@@ -35,8 +36,12 @@ def should_debounce(state):
         # Same state within debounce window: skip
         if last_state == state and elapsed < DEBOUNCE_SECONDS:
             return True
-        # Don't let "working" override a recent state transition
-        # (prevents async PreToolUse from racing with Stop/PermissionRequest hooks)
+        # Don't let "working" override "input_required" too quickly
+        # (prevents PreToolUse from racing with Stop, but allows
+        # override after user answers an AskUserQuestion)
+        if state == "working" and last_state == "input_required" and elapsed < INPUT_REQUIRED_GUARD_SECONDS:
+            return True
+        # Don't let "working" override other recent transitions
         if state == "working" and last_state != "working" and elapsed < DEBOUNCE_SECONDS:
             return True
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
