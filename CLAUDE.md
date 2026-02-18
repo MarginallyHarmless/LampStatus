@@ -5,9 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 Govee smart lamp integration that reacts to Claude Code's states via hooks. The lamp changes color:
-- Cool blue/teal (0, 180, 220) — Idle
-- Animated scene (or amber fallback 255, 160, 40) — Working
-- Vivid red (255, 30, 30) — Input required
+- Warm white (255, 220, 200) — Idle
+- Animated scene (or warm amber fallback 255, 140, 20) — Working
+- Red pulse (255, 0, 0) — Input required
 
 ## Key Files
 
