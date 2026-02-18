@@ -155,27 +155,15 @@ def stop_pulse():
         os.remove(PULSE_PID_PATH)
     except FileNotFoundError:
         pass
-    # Also kill any orphaned pulse-loop processes by command line
+    # Kill any orphaned pulse-loop processes by command line
     try:
-        script = os.path.abspath(__file__)
+        script = os.path.basename(os.path.abspath(__file__))
         subprocess.run(
-            ["taskkill", "/F", "/FI", f"WINDOWTITLE eq --pulse-loop*"],
+            ["wmic", "process", "where",
+             f"commandline like '%{script}%--pulse-loop%'",
+             "call", "terminate"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
         )
-        # Use WMIC to find processes by command line
-        result = subprocess.run(
-            ["wmic", "process", "where",
-             f"commandline like '%{os.path.basename(script)}%--pulse-loop%'",
-             "get", "processid"],
-            capture_output=True, text=True,
-        )
-        for line in result.stdout.strip().splitlines():
-            line = line.strip()
-            if line.isdigit():
-                try:
-                    os.kill(int(line), signal.SIGTERM)
-                except (ProcessLookupError, OSError):
-                    pass
     except Exception:
         pass
 
