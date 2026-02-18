@@ -17,6 +17,14 @@ def list_devices(api_key):
     resp.raise_for_status()
     return resp.json()["data"]
 
+def extract_scenes(device):
+    """Extract dynamic scene options from a device's capabilities."""
+    for cap in device.get("capabilities", []):
+        if cap.get("type") == "devices.capabilities.dynamic_scene" and cap.get("instance") == "lightScene":
+            options = cap.get("parameters", {}).get("options", [])
+            return [{"name": opt["name"], "value": opt["value"]} for opt in options]
+    return []
+
 def main():
     api_key = input("Enter your Govee API key: ").strip()
     if not api_key:
@@ -45,11 +53,14 @@ def main():
         print("Invalid choice, try again.")
 
     selected = devices[int(choice) - 1]
+    scenes = extract_scenes(selected)
+
     config = {
         "api_key": api_key,
         "device": selected["device"],
         "sku": selected["sku"],
         "device_name": selected["deviceName"],
+        "scenes": scenes,
     }
 
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
@@ -57,6 +68,10 @@ def main():
         json.dump(config, f, indent=2)
 
     print(f"\nConfig saved! Device: {selected['deviceName']}")
+    if scenes:
+        print(f"Discovered {len(scenes)} dynamic scene(s) for animation support.")
+    else:
+        print("No dynamic scenes found — working state will use static amber color.")
     print("You're all set. The lamp will now react to Claude Code states.")
 
 if __name__ == "__main__":
