@@ -26,7 +26,7 @@ COLORS = {
 
 PULSE_COLORS = [
     (255, 0, 0),    # Bright red
-    (0, 0, 0),      # Off
+    (40, 0, 0),     # Dim red
 ]
 
 SCENE_KEYWORDS = ["breathe", "pulse", "aurora", "candle"]
