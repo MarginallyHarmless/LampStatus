@@ -45,9 +45,9 @@ def should_debounce(state):
         # Same state within debounce window: skip
         if last_state == state and elapsed < DEBOUNCE_SECONDS:
             return True
-        # Don't let "working" override "input_required" within a short window
-        # (prevents async PreToolUse race with Stop hook)
-        if last_state == "input_required" and state == "working" and elapsed < DEBOUNCE_SECONDS:
+        # Don't let "working" override a recent state transition
+        # (prevents async PreToolUse from racing with Stop/PermissionRequest hooks)
+        if state == "working" and last_state != "working" and elapsed < DEBOUNCE_SECONDS:
             return True
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         pass
