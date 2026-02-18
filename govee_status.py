@@ -40,7 +40,14 @@ def should_debounce(state):
     try:
         with open(DEBOUNCE_PATH, "r") as f:
             data = json.load(f)
-        if data.get("state") == state and time.time() - data.get("time", 0) < DEBOUNCE_SECONDS:
+        last_state = data.get("state")
+        elapsed = time.time() - data.get("time", 0)
+        # Same state within debounce window: skip
+        if last_state == state and elapsed < DEBOUNCE_SECONDS:
+            return True
+        # Don't let "working" override "input_required" within a short window
+        # (prevents async PreToolUse race with Stop hook)
+        if last_state == "input_required" and state == "working" and elapsed < DEBOUNCE_SECONDS:
             return True
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         pass
@@ -137,6 +144,7 @@ def save_scenes_to_config(config, scenes):
 
 def stop_pulse():
     """Kill any running pulse background process."""
+    # Kill by PID file
     try:
         with open(PULSE_PID_PATH, "r") as f:
             pid = int(f.read().strip())
@@ -146,6 +154,29 @@ def stop_pulse():
     try:
         os.remove(PULSE_PID_PATH)
     except FileNotFoundError:
+        pass
+    # Also kill any orphaned pulse-loop processes by command line
+    try:
+        script = os.path.abspath(__file__)
+        subprocess.run(
+            ["taskkill", "/F", "/FI", f"WINDOWTITLE eq --pulse-loop*"],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+        # Use WMIC to find processes by command line
+        result = subprocess.run(
+            ["wmic", "process", "where",
+             f"commandline like '%{os.path.basename(script)}%--pulse-loop%'",
+             "get", "processid"],
+            capture_output=True, text=True,
+        )
+        for line in result.stdout.strip().splitlines():
+            line = line.strip()
+            if line.isdigit():
+                try:
+                    os.kill(int(line), signal.SIGTERM)
+                except (ProcessLookupError, OSError):
+                    pass
+    except Exception:
         pass
 
 
@@ -228,21 +259,20 @@ def main():
         config = json.load(f)
 
     try:
+        stop_pulse()
         if state == "input_required":
             start_pulse()
-        else:
-            stop_pulse()
-            if state == "working":
-                scenes = config.get("scenes", [])
-                scene_value = pick_scene(scenes)
-                if scene_value is not None:
-                    set_scene(config, scene_value)
-                else:
-                    r, g, b = COLORS["working"]
-                    set_color(config, r, g, b)
+        elif state == "working":
+            scenes = config.get("scenes", [])
+            scene_value = pick_scene(scenes)
+            if scene_value is not None:
+                set_scene(config, scene_value)
             else:
-                r, g, b = COLORS[state]
+                r, g, b = COLORS["working"]
                 set_color(config, r, g, b)
+        else:
+            r, g, b = COLORS[state]
+            set_color(config, r, g, b)
         save_state(state)
     except requests.RequestException as e:
         print(f"Govee API error: {e}", file=sys.stderr)
