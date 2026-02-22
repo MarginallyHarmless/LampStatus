@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project
 
 Govee smart lamp integration that reacts to Claude Code's states via hooks. Two states:
-- Warm white (255, 220, 200) — Claude is working or session just started
+- Soft candlelight (255, 180, 100) — Claude is working or session just started
 - Red (255, 0, 0) — Waiting for user (idle, permission needed, or clarifying question)
 
 ## Key Files
