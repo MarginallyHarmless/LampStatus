@@ -14,11 +14,10 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_PATH = os.path.join(SCRIPT_DIR, "config.json")
 DEBOUNCE_PATH = os.path.join(SCRIPT_DIR, ".last_state")
 DEBOUNCE_SECONDS = 2
-INPUT_REQUIRED_GUARD_SECONDS = 5
 
 COLORS = {
     "idle": (255, 220, 200),            # Warm white
-    "working": (255, 140, 20),          # Warm amber/orange
+    "working": (255, 220, 200),         # Warm white (same as idle)
     "input_required": (255, 0, 0),      # Red
 }
 
@@ -33,16 +32,7 @@ def should_debounce(state):
             data = json.load(f)
         last_state = data.get("state")
         elapsed = time.time() - data.get("time", 0)
-        # Same state within debounce window: skip
         if last_state == state and elapsed < DEBOUNCE_SECONDS:
-            return True
-        # Don't let "working" override "input_required" too quickly
-        # (prevents PreToolUse from racing with Stop, but allows
-        # override after user answers an AskUserQuestion)
-        if state == "working" and last_state == "input_required" and elapsed < INPUT_REQUIRED_GUARD_SECONDS:
-            return True
-        # Don't let "working" override other recent transitions
-        if state == "working" and last_state != "working" and elapsed < DEBOUNCE_SECONDS:
             return True
     except (FileNotFoundError, json.JSONDecodeError, KeyError):
         pass

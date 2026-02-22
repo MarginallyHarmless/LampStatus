@@ -4,10 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Govee smart lamp integration that reacts to Claude Code's states via hooks. The lamp changes color:
-- Warm white (255, 220, 200) — Idle
-- Warm amber (255, 140, 20) — Working
-- Red (255, 0, 0) — Input required
+Govee smart lamp integration that reacts to Claude Code's states via hooks. Two states:
+- Warm white (255, 220, 200) — Claude is working or session just started
+- Red (255, 0, 0) — Waiting for user (idle, permission needed, or clarifying question)
 
 ## Key Files
 
@@ -28,4 +27,4 @@ Govee smart lamp integration that reacts to Claude Code's states via hooks. The 
 
 ## Hooks
 
-Configured in `~/.claude/settings.json` (global). All hooks are async. Hook events: SessionStart, UserPromptSubmit, PreToolUse, Stop, Notification (idle_prompt matcher).
+Configured in `~/.claude/settings.json` (global). All hooks are async. Hook events: SessionStart, UserPromptSubmit, PreToolUse, Stop, Notification (idle_prompt and permission_prompt matchers).
