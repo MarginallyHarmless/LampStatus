@@ -16,9 +16,9 @@ DEBOUNCE_PATH = os.path.join(SCRIPT_DIR, ".last_state")
 DEBOUNCE_SECONDS = 2
 
 COLORS = {
-    "idle": (255, 180, 100),            # Soft candlelight
-    "working": (255, 180, 100),         # Soft candlelight (same as idle)
-    "input_required": (255, 0, 0),      # Red
+    "idle": (255, 0, 0),                # Red (working)
+    "working": (255, 0, 0),             # Red (working)
+    "input_required": (255, 140, 50),   # Deep amber (waiting for user)
 }
 
 
